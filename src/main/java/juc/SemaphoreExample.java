@@ -1,0 +1,43 @@
+package juc;
+
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Semaphore;
+
+public class SemaphoreExample {
+    private static SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd");
+    private static final int threadNum = 200;
+    private static final int clientNum = 5000;
+
+    public static void main(String[] args) throws InterruptedException {
+        ExecutorService exec = Executors.newCachedThreadPool();
+        Semaphore semaphore = new Semaphore(threadNum);
+        CountDownLatch latch = new CountDownLatch(clientNum);
+        for (int i = 0; i < clientNum; i ++) {
+            exec.execute(() -> {
+                try {
+                    semaphore.acquire(3);
+                    latch.countDown();
+                    doSomething();
+                    semaphore.release(3);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            });
+        }
+
+        latch.await();
+        exec.shutdown();
+    }
+
+    public static void doSomething() {
+        try {
+            dateFormat.parse("20180208");
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+    }
+}
